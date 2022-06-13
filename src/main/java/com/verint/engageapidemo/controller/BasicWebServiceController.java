@@ -1,6 +1,8 @@
 package com.verint.engageapidemo.controller;
 
 import com.verint.engageapidemo.model.ThrowItBackModel;
+import com.verint.platform.security.VwtRequest;
+import com.verint.platform.security.VwtSecurity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
@@ -25,11 +27,23 @@ public class BasicWebServiceController {
     }
 
     @PostMapping("isVerintAlive")
-    public ResponseEntity<String> isVerintAlive(@RequestParam String authToken) {
-        String url = "https://blue77.verint.training/wfo/user-mgmt-api/v1/employees";
+    public ResponseEntity<String> isVerintAlive(@RequestParam String apiKeyId, @RequestParam String apiKeyValue) {
+        String baseUrl = "https://blue77.verint.training";
+        String endpoint = "/wfo/user-mgmt-api/v1/employees";
+        String url = baseUrl + endpoint;
 
+        VwtRequest req = VwtRequest.builder()
+                .url(endpoint)
+                .method("HEAD")
+                .build();
+
+        String token = VwtSecurity.tokenBuilder()
+                .forRequest(req)
+                .withKey(apiKeyId, apiKeyValue)
+                .createToken();
+        LOGGER.info("Here is the token: {}", token);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Impact360AuthToken", authToken);
+        headers.add("Authorization", token);
         HttpEntity<String> request = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<String> authResponse = restTemplate.exchange(url, HttpMethod.HEAD, request, String.class);
