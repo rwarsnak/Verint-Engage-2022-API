@@ -15,6 +15,17 @@
             <url>https://af.verintconnect.com/artifactory/WFO-maven</url>
         </repository>
     </repositories>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>2.17.197</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <groupId>com.verint</groupId>
     <artifactId>engage-api-demo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
@@ -61,6 +72,16 @@
             <artifactId>log4j-core</artifactId>
             <version>2.17.0</version>
         </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.8</version>
+        </dependency>
+
     </dependencies>
 
     <build>
