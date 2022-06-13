@@ -1,0 +1,1597 @@
+{
+	"info": {
+		"_postman_id": "53c58b16-0151-40af-84c6-5645bfff734e",
+		"name": "Verint Engage 2022 API Workshops",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7557564"
+	},
+	"item": [
+		{
+			"name": "HTTP/REST Introduction",
+			"item": [
+				{
+					"name": "Earthquakes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://earthquake.usgs.gov/fdsnws/event/1/query",
+							"protocol": "https",
+							"host": [
+								"earthquake",
+								"usgs",
+								"gov"
+							],
+							"path": [
+								"fdsnws",
+								"event",
+								"1",
+								"query"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Employees",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/user-mgmt-api/v1/employees",
+							"protocol": "{{wfo_protocol}}",
+							"host": [
+								"{{wfo_hostname}}"
+							],
+							"path": [
+								"wfo",
+								"user-mgmt-api",
+								"v1",
+								"employees"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "apikey",
+				"apikey": [
+					{
+						"key": "value",
+						"value": "{{Authorization}}",
+						"type": "string"
+					},
+					{
+						"key": "key",
+						"value": "Authorization",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"var sdk = require('postman-collection');",
+							"var crypto = require(\"crypto-js\");",
+							"//get api key and key id",
+							"var APIKeyId = pm.environment.get(\"api_key_id\"),",
+							"APIKey = pm.environment.get(\"api_key\");",
+							"//get ISO date",
+							"function ISODateString(d) {",
+							"function pad(n) {",
+							"return n < 10 ? '0' + n : n",
+							"}",
+							"return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' +",
+							"pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + ':' +",
+							"pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + 'Z'",
+							"}",
+							"//generate base64url by using cryptojs",
+							"function base64url(input) {",
+							"var base64String = crypto.enc.Base64.stringify(input);",
+							"return urlConvertBase64(base64String);",
+							"}",
+							"//convert base64url to base64",
+							"function debase64url (str) {",
+							"return (str + '==='.slice((str.length + 3) % 4))",
+							".replace(/-/g, '+')",
+							".replace(/_/g, '/')",
+							"}",
+							"//convert to base 64 url",
+							"function urlConvertBase64(input) {",
+							"var output = input.replace(/=+$/, '');",
+							"output = output.replace(/\\+/g, '-');",
+							"output = output.replace(/\\//g, '_');",
+							"return output;",
+							"}",
+							"var replaceVars = function(string)",
+							"{",
+							"return string.replace(/\\{\\{.+?\\}\\}/g, function(match)",
+							"{",
+							"var varName = match.substr(2, match.length - 4);",
+							"var varValue = environment[varName] || globals[varName];",
+							"return varValue ? replaceVars(varValue) : match; // recursive!",
+							"});",
+							"};",
+							"// get 32 bytes random;",
+							"var random = crypto.lib.WordArray.random(16);",
+							"//get path expanding any variables that exist",
+							"var fullPath = replaceVars(request.url);",
+							"var loc = new sdk.Url(fullPath);",
+							"var path = loc.getPath();",
+							"//generate canonicalizedHeader",
+							"var ref = pm.request.headers.toObject(true);",
+							"var canonicalizedHeader = \"\";",
+							"for (var key in ref) {",
+							"//only headers with \"verint-\" prefix can be used",
+							"if (key.substring(0, 7).toLowerCase() != \"verint-\") continue;",
+							"canonicalizedHeader += (key + \":\");",
+							"var value = ref[key];",
+							"canonicalizedHeader += value;",
+							"canonicalizedHeader += \"\\n\";",
+							"}",
+							"//make canonicalizedHeader it lower case",
+							"canonicalizedHeader = canonicalizedHeader.toLowerCase();",
+							"//get String to sign",
+							"var salt = base64url(random);",
+							"var method = pm.request.method;",
+							"var issuedAt = ISODateString(new Date());",
+							"var stringToSign = salt + \"\\n\" + method + \"\\n\" + path + \"\\n\" + issuedAt +",
+							"\"\\n\" + canonicalizedHeader + \"\\n\";",
+							"var hash = crypto.HmacSHA256(stringToSign,",
+							"crypto.enc.Base64.parse(debase64url(APIKey)));",
+							"//get an signature",
+							"var signature = crypto.enc.Base64.stringify(hash);",
+							"//String prefix",
+							"var verintAuthId = \"Vrnt-1-HMAC-SHA256\";",
+							"//Generate Authorization Header Value",
+							"var authHeaderValue = verintAuthId + \" \" + \"salt=\" + salt + \",\" + \"iat=\" +",
+							"issuedAt + \",\" + \"kid=\" + APIKeyId + \",\" + \"sig=\" +",
+							"urlConvertBase64(signature);",
+							"console.log(APIKey)",
+							"console.log(APIKeyId)",
+							"console.log(method)",
+							"console.log(fullPath)",
+							"console.log(loc)",
+							"console.log(path)",
+							"",
+							"postman.setGlobalVariable(\"Authorization\", authHeaderValue);"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "KM Enterprise",
+			"item": [
+				{
+					"name": "KM Generate OIDC Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const responseJson = pm.response.json();\r",
+									"pm.environment.set(\"km_oidc_token\", responseJson.id_token);\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "{{km_admin_username}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{km_admin_password}}",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "default",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "openid tags content_entitlements",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{km_protocol}}://{{km_hostname}}/oidc-token-service/{{km_tenant_id}}/token",
+							"protocol": "{{km_protocol}}",
+							"host": [
+								"{{km_hostname}}"
+							],
+							"path": [
+								"oidc-token-service",
+								"{{km_tenant_id}}",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "KM Search Landing Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{km_protocol}}://{{km_hostname}}/km-search-service/{{km_tenant_id}}",
+							"protocol": "{{km_protocol}}",
+							"host": [
+								"{{km_hostname}}"
+							],
+							"path": [
+								"km-search-service",
+								"{{km_tenant_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search All Content",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{km_protocol}}://{{km_hostname}}/km-search-service/{{km_tenant_id}}/search",
+							"protocol": "{{km_protocol}}",
+							"host": [
+								"{{km_hostname}}"
+							],
+							"path": [
+								"km-search-service",
+								"{{km_tenant_id}}",
+								"search"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "apikey",
+				"apikey": [
+					{
+						"key": "key",
+						"value": "Authorization",
+						"type": "string"
+					},
+					{
+						"key": "value",
+						"value": "OIDC_id_token {{km_oidc_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "WFO",
+			"item": [
+				{
+					"name": "Authentication",
+					"item": [
+						{
+							"name": "Get User Authentication Token",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/rest/core-api/auth/token",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"rest",
+										"core-api",
+										"auth",
+										"token"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Ingestion API",
+					"item": [
+						{
+							"name": "Ingest Call Metadata",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var locationHeader = pm.response.headers.get(\"Location\");\r",
+											"pm.environment.set(\"ingested_call_url\", locationHeader);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"contents\": [\r\n        {\r\n            \"index\": 1,\r\n            \"duration\": \"118\",\r\n            \"content_type\": \"audio/vnd.verint.wav\",\r\n            \"start_time\": \"2020-06-13T20:48:00.000Z\"\r\n        }\r\n    ],\r\n    \"contacts\": [\r\n        {\r\n            \"start_time\": \"2020-06-13T20:48:00.000Z\",\r\n            \"end_time\": \"2020-06-13T20:49:58.000Z\",\r\n            \"duration\": \"118\",\r\n            \"sessions\": [\r\n                {\r\n                    \"interaction_type\": \"Phone\",\r\n                    \"start_time\": \"2020-06-13T20:48:00.000Z\",\r\n                    \"end_time\": \"2020-06-13T20:49:58.000Z\",\r\n                    \"duration\": \"118\",\r\n                    \"direction\": \"Inbound\",\r\n                    \"ani\": \"7705551212\",\r\n                    \"dnis\": \"18001234567\",\r\n                    \"pbx_login_id\": \"9999999\",\r\n                    \"extension\": \"3001\",\r\n                    \"switch_call_id\": \"20171114093340375\",\r\n                    \"switch_id\": \"9\",\r\n                    \"tags\": [\r\n                        {\r\n                            \"eventtime\": \"2020-06-13T20:48:00.000Z\",\r\n                            \"eventtype\": \"Begin_Call\",\r\n                            \"attributes\": {\r\n                                \"message\": \"'id':'20171114093340375'\",\r\n                                \"ani\": \"7705551212\",\r\n                                \"dnis\": \"18001234567\",\r\n                                \"account_no\": \"123454678901234\"\r\n                            }\r\n                        },\r\n                        {\r\n                            \"eventtime\": \"2020-06-13T20:49:00.000Z\",\r\n                            \"eventtype\": \"DataEvent\",\r\n                            \"attributes\": {\r\n                                \"transaction_type\": \"Sales Call\"\r\n                            }\r\n                        },\r\n                        {\r\n                            \"eventtime\": \"2020-06-13T20:49:58.000Z\",\r\n                            \"eventtype\": \"End_Call\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}"
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/api/recording/ingestion/v3/recordings",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"api",
+										"recording",
+										"ingestion",
+										"v3",
+										"recordings"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Ingest Content",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "file",
+									"file": {
+										"src": ""
+									}
+								},
+								"url": {
+									"raw": "{{ingested_call_url}}/1",
+									"host": [
+										"{{ingested_call_url}}"
+									],
+									"path": [
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Ingest Text",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"actors\": [\r\n        {\r\n            \"accountId\": \"visitor\",\r\n            \"role\": \"visitor\",\r\n            \"displayName\": \"Bugs Bunny\",\r\n            \"id\": \"Bugs Bunny\",\r\n            \"email\": \"bugs.bunny@wb.com\"\r\n        },\r\n        {\r\n            \"accountId\": \"hwalker@verintlabs.io\",\r\n            \"role\": \"agent\",\r\n            \"displayName\": \"Hannah\",\r\n            \"id\": \"hwalker@verintlabs.io\"\r\n        }\r\n    ],\r\n    \"utterances\": [\r\n        {\r\n            \"actor\": \"Bugs Bunny\",\r\n            \"raw_value\": \"What's up doc?\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:00:05.513Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"hwalker@verintlabs.io\",\r\n            \"raw_value\": \"Good morning, This is Hannah. I will be assisting you today. It looks like you're experiencing a power outage. Is that correct?\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:00:28.933Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"Bugs Bunny\",\r\n            \"raw_value\": \"Yes\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:00:32.425Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"hwalker@verintlabs.io\",\r\n            \"raw_value\": \"OK. I want to help you get your power restored. First I need some information...\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:00:55.516Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"hwalker@verintlabs.io\",\r\n            \"raw_value\": \"Question 1\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:00:58.181Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"hwalker@verintlabs.io\",\r\n            \"raw_value\": \"Question 2\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:01:00.159Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"hwalker@verintlabs.io\",\r\n            \"raw_value\": \"Question 3\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:01:02.733Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"Bugs Bunny\",\r\n            \"raw_value\": \"Answer 1\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:01:06.983Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"Bugs Bunny\",\r\n            \"raw_value\": \"Answer 2\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:01:09.601Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"Bugs Bunny\",\r\n            \"raw_value\": \"Answer 3\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:01:11.888Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"hwalker@verintlabs.io\",\r\n            \"raw_value\": \"Thanks. I've created a trouble order on your behalf and we'll have your power back on as soon as possible. Is there anything else you need help with today?\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:01:50.892Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"Bugs Bunny\",\r\n            \"raw_value\": \"No. Thanks very much for your help.\",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:02:00.774Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        },\r\n        {\r\n            \"actor\": \"hwalker@verintlabs.io\",\r\n            \"raw_value\": \"Thank you for contacting us today. We hope we were able to assist you with you inquiry today. Please remember, if you see a downed power line, stay at least 10 metres away and contact us immediately. \",\r\n            \"language\": \"en-us\",\r\n            \"startTime\": \"2020-06-13T15:02:04.265Z[UTC]\",\r\n            \"to\": [\r\n                \"AllActors\"\r\n            ],\r\n            \"type\": \"InstantMessage\"\r\n        }\r\n    ],\r\n    \"sourceType\": \"Chat\",\r\n    \"language\": \"en-us\",\r\n    \"startTime\": \"2020-06-13T14:59:57.071Z\",\r\n    \"attributes\": {\r\n        \"sourceType\": \"Chat\",\r\n        \"sourceSubType\": \"Chat\"\r\n    },\r\n    \"id\": \"7F511E501000017C000003640A200166\",\r\n    \"endTime\": \"2020-06-13T15:02:09.292Z\",\r\n    \"type\": \"Conversation\",\r\n    \"direction\": 1\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/api/recording/textcapture/v1/ingestion",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"api",
+										"recording",
+										"textcapture",
+										"v1",
+										"ingestion"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Export and Enrichment API",
+					"item": [
+						{
+							"name": "Interaction Workspace",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "https://blue77.verint.training/Ultra/DynaAsp/vCRMQuery.aspx?sTime=2020-06-04%2000:00:00&eTime=2020-06-11%2000:00:00",
+									"protocol": "https",
+									"host": [
+										"blue77",
+										"verint",
+										"training"
+									],
+									"path": [
+										"Ultra",
+										"DynaAsp",
+										"vCRMQuery.aspx"
+									],
+									"query": [
+										{
+											"key": "sTime",
+											"value": "2020-06-04%2000:00:00"
+										},
+										{
+											"key": "eTime",
+											"value": "2020-06-11%2000:00:00"
+										},
+										{
+											"key": "switchcallid",
+											"value": "35585",
+											"disabled": true
+										},
+										{
+											"key": "world",
+											"value": "etm",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search for Interactions",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const responseJson = pm.response.json();\r",
+											"pm.environment.set(\"transaction_id\", responseJson.Sessions[0].transaction_id);\r",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"ConditionsString\": \"duration > 0 and interaction_type = 'Phone'\",\r\n    \"period\": {\r\n        \"BeginPeriod\": \"2020-06-09T00:00:00\",\r\n        \"EndPeriod\": \"2020-06-15T00:00:00\",\r\n        \"Type\": \"Absolute\"\r\n    },\r\n    \"RequestedGroups\": [],\r\n    \"RequestedColumns\": [],\r\n    \"CommandTimoutSeconds\": 30\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/DASWebAPI/Query/ExecuteDynamicQuery",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"DASWebAPI",
+										"Query",
+										"ExecuteDynamicQuery"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Search for Evaluations",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"queryDefinition\": {\r\n        \"PresentationProperties\": {\r\n            \"QueryTime\": \"UserTime\",\r\n            \"QueryPeriod\": {\r\n                \"BeginPeriod\": \"2022-06-10\",\r\n                \"EndPeriod\": \"2022-06-12\",\r\n                \"Type\": \"Absolute\"\r\n            }\r\n        },\r\n        \"Visibility\": {\r\n            \"Database\": \"CentralApp\",\r\n            \"UserRole\": \"Supervisor\"\r\n        }\r\n    }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/DASWebAPI/Query/Evaluation",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"DASWebAPI",
+										"Query",
+										"Evaluation"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Interaction Data Download",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"async_response\": false,\r\n    \"types\": [\r\n        \"Audio\"\r\n    ],\r\n    \"encrypted\": false,\r\n    \"audio_format\": \"as-recorded\",\r\n    \"screen_format\": \"as-recorded\",\r\n    \"container_format\": \"mp4\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/api/recording/locator/v1/export/interactions/:transactionId",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"api",
+										"recording",
+										"locator",
+										"v1",
+										"export",
+										"interactions",
+										":transactionId"
+									],
+									"variable": [
+										{
+											"key": "transactionId",
+											"value": "{{transaction_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Interaction Data Update",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"custom_data\": {\r\n        \"1\": \"new_value\"\r\n    }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/api/recording/capture/v1/interactions/update/:transactionId",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"api",
+										"recording",
+										"capture",
+										"v1",
+										"interactions",
+										"update",
+										":transactionId"
+									],
+									"variable": [
+										{
+											"key": "transactionId",
+											"value": "{{transaction_id}}"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Data Source API",
+					"item": [
+						{
+							"name": "Get Employee Workspace",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/user-mgmt-api/v1/employees/1/workspace",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"user-mgmt-api",
+										"v1",
+										"employees",
+										"1",
+										"workspace"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Users and Extensions",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/api/em/recorder/v2/datasources/9/workspace",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"api",
+										"em",
+										"recorder",
+										"v2",
+										"datasources",
+										"9",
+										"workspace"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Login/Extension for an Employee",
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/vnd.api+json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"data\": [\r\n        {\r\n            \"type\": \"workspace\",\r\n            \"id\": \"456\",\r\n            \"attributes\": {\r\n                \"assets\": [\r\n                    {\r\n                        \"dataSourceID\": 10,\r\n                        \"employeeID\": 1,\r\n                        \"loginName\": \"hello\"\r\n                    }\r\n                ]\r\n            }\r\n        }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/user-mgmt-api/v1/employees/1/workspace",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"user-mgmt-api",
+										"v1",
+										"employees",
+										"1",
+										"workspace"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Audit Trail API",
+					"item": [
+						{
+							"name": "Export Audit Trail",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/api/audit/v2/audits?limit=5",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"api",
+										"audit",
+										"v2",
+										"audits"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "5"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Export Filtered Audit Trail",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"data\": {\r\n        \"attributes\": {\r\n            \"userName\": \"blue77-admin\",\r\n            \"module\": \"Playback Service\",\r\n            \"timeOfEventStart\": \"2022-06-01T00:00:00\",\r\n            \"timeOfEventEnd\":\"2022-06-09T00:00:00\"\r\n        }\r\n    }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/api/audit/v2/audits?limit=5",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"api",
+										"audit",
+										"v2",
+										"audits"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "5"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Adherence API",
+					"item": [
+						{
+							"name": "Get Employee Schedule",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/fis-api/v1/schedules?retrievalStartDate=2022-06-05T00%3A00%3A00Z&retrievalEndDate=2022-06-12T00%3A00%3A00Z&employeeLookupKey=userName&employeeIdentifierList=Phone09",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"fis-api",
+										"v1",
+										"schedules"
+									],
+									"query": [
+										{
+											"key": "retrievalStartDate",
+											"value": "2022-06-05T00%3A00%3A00Z"
+										},
+										{
+											"key": "retrievalEndDate",
+											"value": "2022-06-12T00%3A00%3A00Z"
+										},
+										{
+											"key": "employeeLookupKey",
+											"value": "userName"
+										},
+										{
+											"key": "employeeIdentifierList",
+											"value": "Phone09"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create / Update Schedule",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"data\": [\r\n        {\r\n            \"id\": \"0\",\r\n            \"type\": \"employee_schedule\",\r\n            \"attributes\": {\r\n                \"callbackURL\": null,\r\n                \"requestPeriodStartDate\": \"2022-06-05T00:00:00Z\",\r\n                \"requestPeriodEndDate\": \"2022-06-12T00:00:00Z\",\r\n                \"scheduleInformationList\": [\r\n                    {\r\n                        \"employeeIdentifier\": \"Phone08\",\r\n                        \"employeeLookupKey\": \"userName\",\r\n                        \"shifts\": [\r\n                            {\r\n                                \"mainShiftEvent\": {\r\n                                    \"description\": \"\",\r\n                                    \"preShiftOvertime\": null,\r\n                                    \"postShiftOvertime\": null,\r\n                                    \"activityName\": \"PHONE\",\r\n                                    \"eventStartTime\": \"2022-06-07T11:00:00Z\",\r\n                                    \"duration\": \"480\"\r\n                                },\r\n                                \"shiftActivityList\": [\r\n                                    {\r\n                                        \"activityName\": \"Lunch\",\r\n                                        \"eventStartTime\": \"2022-06-07T18:15:00Z\",\r\n                                        \"duration\": \"30\"\r\n                                    },\r\n                                    {\r\n                                        \"activityName\": \"Break\",\r\n                                        \"eventStartTime\": \"2022-06-07T11:45:00Z\",\r\n                                        \"duration\": \"15\"\r\n                                    }\r\n                                ]\r\n                            }\r\n                        ]\r\n                    }\r\n                ],\r\n                \"calendarEventAssignmentList\": [],\r\n                \"calendarEventAssignmentActivityRemovalList\": []\r\n            }\r\n        }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/fis-api/v1/schedules",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"fis-api",
+										"v1",
+										"schedules"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create / Update Schedule Copy",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"data\": [\r\n        {\r\n            \"id\": \"0\",\r\n            \"type\": \"employee_schedule\",\r\n            \"attributes\": {\r\n                \"callbackURL\": null,\r\n                \"requestPeriodStartDate\": \"2022-06-05T00:00:00Z\",\r\n                \"requestPeriodEndDate\": \"2022-06-12T00:00:00Z\",\r\n                \"scheduleInformationList\": [\r\n                    {\r\n                        \"employeeIdentifier\": \"Phone08\",\r\n                        \"employeeLookupKey\": \"userName\",\r\n                        \"shifts\": [\r\n                            {\r\n                                \"mainShiftEvent\": {\r\n                                    \"description\": \"\",\r\n                                    \"preShiftOvertime\": null,\r\n                                    \"postShiftOvertime\": null,\r\n                                    \"activityName\": \"PHONE\",\r\n                                    \"eventStartTime\": \"2022-06-07T11:00:00Z\",\r\n                                    \"duration\": \"480\"\r\n                                },\r\n                                \"shiftActivityList\": [\r\n                                    {\r\n                                        \"activityName\": \"Lunch\",\r\n                                        \"eventStartTime\": \"2022-06-07T18:15:00Z\",\r\n                                        \"duration\": \"30\"\r\n                                    },\r\n                                    {\r\n                                        \"activityName\": \"Break\",\r\n                                        \"eventStartTime\": \"2022-06-07T11:45:00Z\",\r\n                                        \"duration\": \"15\"\r\n                                    }\r\n                                ]\r\n                            }\r\n                        ]\r\n                    }\r\n                ],\r\n                \"calendarEventAssignmentList\": [],\r\n                \"calendarEventAssignmentActivityRemovalList\": []\r\n            }\r\n        }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/fis-api/v1/schedules",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"fis-api",
+										"v1",
+										"schedules"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Employee Adherence",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"data\": [\r\n        {\r\n            \"id\": \"0\",\r\n            \"type\": \"employee_schedule\",\r\n            \"attributes\": {\r\n                \"callbackURL\": null,\r\n                \"requestPeriodStartDate\": \"2022-06-05T00:00:00Z\",\r\n                \"requestPeriodEndDate\": \"2022-06-12T00:00:00Z\",\r\n                \"scheduleInformationList\": [\r\n                    {\r\n                        \"employeeIdentifier\": \"Phone08\",\r\n                        \"employeeLookupKey\": \"userName\",\r\n                        \"shifts\": [\r\n                            {\r\n                                \"mainShiftEvent\": {\r\n                                    \"description\": \"\",\r\n                                    \"preShiftOvertime\": null,\r\n                                    \"postShiftOvertime\": null,\r\n                                    \"activityName\": \"PHONE\",\r\n                                    \"eventStartTime\": \"2022-06-07T11:00:00Z\",\r\n                                    \"duration\": \"480\"\r\n                                },\r\n                                \"shiftActivityList\": [\r\n                                    {\r\n                                        \"activityName\": \"Lunch\",\r\n                                        \"eventStartTime\": \"2022-06-07T18:15:00Z\",\r\n                                        \"duration\": \"30\"\r\n                                    },\r\n                                    {\r\n                                        \"activityName\": \"Break\",\r\n                                        \"eventStartTime\": \"2022-06-07T11:45:00Z\",\r\n                                        \"duration\": \"15\"\r\n                                    }\r\n                                ]\r\n                            }\r\n                        ]\r\n                    }\r\n                ],\r\n                \"calendarEventAssignmentList\": [],\r\n                \"calendarEventAssignmentActivityRemovalList\": []\r\n            }\r\n        }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/fis-api/v1/adherence?adherenceStartDate=2022-06-05T00%3A00%3A00Z&adherenceEndDate=2022-06-12T00%3A00%3A00Z&employeeLookupKey=userName&employeeIdentifierList=Phone08",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"fis-api",
+										"v1",
+										"adherence"
+									],
+									"query": [
+										{
+											"key": "adherenceStartDate",
+											"value": "2022-06-05T00%3A00%3A00Z"
+										},
+										{
+											"key": "adherenceEndDate",
+											"value": "2022-06-12T00%3A00%3A00Z"
+										},
+										{
+											"key": "employeeLookupKey",
+											"value": "userName"
+										},
+										{
+											"key": "employeeIdentifierList",
+											"value": "Phone08"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Export Time Off Requests API",
+					"item": [
+						{
+							"name": "Export Time Off Requests",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/wfm-rm-api/v1/time-off-request-export?filter[retrievalStartDate]=2019-01-01&filter[retrievalEndDate]=2022-12-31",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"wfm-rm-api",
+										"v1",
+										"time-off-request-export"
+									],
+									"query": [
+										{
+											"key": "filter[retrievalStartDate]",
+											"value": "2019-01-01"
+										},
+										{
+											"key": "filter[retrievalEndDate]",
+											"value": "2022-12-31"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Staffing and Statistics API",
+					"item": [
+						{
+							"name": "Get Queue Staffing Data",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/fis-api/v1/staffing?staffingStartDate=2021-07-12T00:00:00Z&staffingEndDate=2021-07-17T00:00:00Z&queueIdentifierList=PHONE 1",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"fis-api",
+										"v1",
+										"staffing"
+									],
+									"query": [
+										{
+											"key": "staffingStartDate",
+											"value": "2021-07-12T00:00:00Z"
+										},
+										{
+											"key": "staffingEndDate",
+											"value": "2021-07-17T00:00:00Z"
+										},
+										{
+											"key": "queueIdentifierList",
+											"value": "PHONE 1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add / Update Timeseries Queue Data",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"data\": {\r\n    \"attributes\": {\r\n      \"queueTimeSeries\": {\r\n        \"dataSourceName\": \"Telecom\",\r\n        \"queueName\": \"PHONE 1\",\r\n        \"time\": \"2021-07-12T11:30:00.000-0700\",\r\n        \"reportInterval\": 15,\r\n        \"dataSourceGroupTimeSeries\": [\r\n          {\r\n            \"dataSourceGroupName\": \"phone 1\",\r\n            \"volumeActual\": 50,\r\n            \"volumeHandledActual\": 90,\r\n            \"averageSpeedToAnswerActual\": 90,\r\n            \"activityHandlingTimeActual\": 120,\r\n            \"serviceLevelActual\": 50,\r\n            \"abandonsActual\": 90,\r\n            \"backlogActual\": 90,\r\n            \"occupancyActual\": 90,\r\n            \"staffingActual\": 90\r\n          }\r\n        ]\r\n      }\r\n    }\r\n  }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{wfo_protocol}}://{{wfo_hostname}}/wfo/fis-csi-api/v1/timeSeriesData",
+									"protocol": "{{wfo_protocol}}",
+									"host": [
+										"{{wfo_hostname}}"
+									],
+									"path": [
+										"wfo",
+										"fis-csi-api",
+										"v1",
+										"timeSeriesData"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			],
+			"auth": {
+				"type": "apikey",
+				"apikey": [
+					{
+						"key": "value",
+						"value": "{{Authorization}}",
+						"type": "string"
+					},
+					{
+						"key": "key",
+						"value": "Authorization",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"var sdk = require('postman-collection');",
+							"var crypto = require(\"crypto-js\");",
+							"//get api key and key id",
+							"var APIKeyId = pm.environment.get(\"api_key_id\"),",
+							"APIKey = pm.environment.get(\"api_key\");",
+							"//get ISO date",
+							"function ISODateString(d) {",
+							"function pad(n) {",
+							"return n < 10 ? '0' + n : n",
+							"}",
+							"return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' +",
+							"pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + ':' +",
+							"pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + 'Z'",
+							"}",
+							"//generate base64url by using cryptojs",
+							"function base64url(input) {",
+							"var base64String = crypto.enc.Base64.stringify(input);",
+							"return urlConvertBase64(base64String);",
+							"}",
+							"//convert base64url to base64",
+							"function debase64url (str) {",
+							"return (str + '==='.slice((str.length + 3) % 4))",
+							".replace(/-/g, '+')",
+							".replace(/_/g, '/')",
+							"}",
+							"//convert to base 64 url",
+							"function urlConvertBase64(input) {",
+							"var output = input.replace(/=+$/, '');",
+							"output = output.replace(/\\+/g, '-');",
+							"output = output.replace(/\\//g, '_');",
+							"return output;",
+							"}",
+							"var replaceVars = function(string)",
+							"{",
+							"return string.replace(/\\{\\{.+?\\}\\}/g, function(match)",
+							"{",
+							"var varName = match.substr(2, match.length - 4);",
+							"var varValue = environment[varName] || globals[varName];",
+							"return varValue ? replaceVars(varValue) : match; // recursive!",
+							"});",
+							"};",
+							"// get 32 bytes random;",
+							"var random = crypto.lib.WordArray.random(16);",
+							"//get path expanding any variables that exist",
+							"var fullPath = replaceVars(request.url);",
+							"var loc = new sdk.Url(fullPath);",
+							"var path = loc.getPath();",
+							"//generate canonicalizedHeader",
+							"var ref = pm.request.headers.toObject(true);",
+							"var canonicalizedHeader = \"\";",
+							"for (var key in ref) {",
+							"//only headers with \"verint-\" prefix can be used",
+							"if (key.substring(0, 7).toLowerCase() != \"verint-\") continue;",
+							"canonicalizedHeader += (key + \":\");",
+							"var value = ref[key];",
+							"canonicalizedHeader += value;",
+							"canonicalizedHeader += \"\\n\";",
+							"}",
+							"//make canonicalizedHeader it lower case",
+							"canonicalizedHeader = canonicalizedHeader.toLowerCase();",
+							"//get String to sign",
+							"var salt = base64url(random);",
+							"var method = pm.request.method;",
+							"var issuedAt = ISODateString(new Date());",
+							"var stringToSign = salt + \"\\n\" + method + \"\\n\" + path + \"\\n\" + issuedAt +",
+							"\"\\n\" + canonicalizedHeader + \"\\n\";",
+							"var hash = crypto.HmacSHA256(stringToSign,",
+							"crypto.enc.Base64.parse(debase64url(APIKey)));",
+							"//get an signature",
+							"var signature = crypto.enc.Base64.stringify(hash);",
+							"//String prefix",
+							"var verintAuthId = \"Vrnt-1-HMAC-SHA256\";",
+							"//Generate Authorization Header Value",
+							"var authHeaderValue = verintAuthId + \" \" + \"salt=\" + salt + \",\" + \"iat=\" +",
+							"issuedAt + \",\" + \"kid=\" + APIKeyId + \",\" + \"sig=\" +",
+							"urlConvertBase64(signature);",
+							"console.log(APIKey)",
+							"console.log(APIKeyId)",
+							"console.log(method)",
+							"console.log(fullPath)",
+							"console.log(loc)",
+							"console.log(path)",
+							"",
+							"postman.setGlobalVariable(\"Authorization\", authHeaderValue);"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Custom Development",
+			"item": [
+				{
+					"name": "Is Alive",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/isAlive",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"isAlive"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Play Catch",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/throwItBack?message=Hello World!",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"throwItBack"
+							],
+							"query": [
+								{
+									"key": "message",
+									"value": "Hello World!"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Is Verint Alive",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/isVerintAlive?username={{wfo_admin_username}}&password={{wfo_admin_password}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"isVerintAlive"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "{{wfo_admin_username}}"
+								},
+								{
+									"key": "password",
+									"value": "{{wfo_admin_password}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Employees With Role",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/extract/employeeRoles?apiKeyId={{api_key_id}}&apiKeyValue={{api_key}}&roleName=Administrator",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"extract",
+								"employeeRoles"
+							],
+							"query": [
+								{
+									"key": "apiKeyId",
+									"value": "{{api_key_id}}"
+								},
+								{
+									"key": "apiKeyValue",
+									"value": "{{api_key}}"
+								},
+								{
+									"key": "roleName",
+									"value": "Administrator"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tagging File From S3",
+					"request": {
+						"auth": {
+							"type": "awsv4",
+							"awsv4": [
+								{
+									"key": "secretKey",
+									"value": "{{aws_secret_key}}",
+									"type": "string"
+								},
+								{
+									"key": "accessKey",
+									"value": "{{aws_access_key}}",
+									"type": "string"
+								},
+								{
+									"key": "region",
+									"value": "us-west-2",
+									"type": "string"
+								},
+								{
+									"key": "service",
+									"value": "s3",
+									"type": "string"
+								},
+								{
+									"key": "addAuthDataToQuery",
+									"value": false,
+									"type": "boolean"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Acc",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "http://s3.us-west-2.amazonaws.com/verint-engage-2022/Tagging.csv",
+							"protocol": "http",
+							"host": [
+								"s3",
+								"us-west-2",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"verint-engage-2022",
+								"Tagging.csv"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Tag Calls",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"accessKey\": \"{{aws_access_key}}\",\r\n    \"secretKey\": \"{{aws_secret_key}}\",\r\n    \"bucketRegion\": \"us-west-2\",\r\n    \"bucketName\": \"verint-engage-2022\",\r\n    \"filename\": \"Tagging.csv\",\r\n    \"apiKeyId\": \"{{api_key_id}}\",\r\n    \"apiKeyValue\": \"{{api_key}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/tag-calls",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"tag-calls"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Schedule with Callback URL",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var sdk = require('postman-collection');\r",
+									"var crypto = require(\"crypto-js\");\r",
+									"//get api key and key id\r",
+									"var APIKeyId = pm.environment.get(\"api_key_id\"),\r",
+									"APIKey = pm.environment.get(\"api_key\");\r",
+									"//get ISO date\r",
+									"function ISODateString(d) {\r",
+									"function pad(n) {\r",
+									"return n < 10 ? '0' + n : n\r",
+									"}\r",
+									"return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' +\r",
+									"pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + ':' +\r",
+									"pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) + 'Z'\r",
+									"}\r",
+									"//generate base64url by using cryptojs\r",
+									"function base64url(input) {\r",
+									"var base64String = crypto.enc.Base64.stringify(input);\r",
+									"return urlConvertBase64(base64String);\r",
+									"}\r",
+									"//convert base64url to base64\r",
+									"function debase64url (str) {\r",
+									"return (str + '==='.slice((str.length + 3) % 4))\r",
+									".replace(/-/g, '+')\r",
+									".replace(/_/g, '/')\r",
+									"}\r",
+									"//convert to base 64 url\r",
+									"function urlConvertBase64(input) {\r",
+									"var output = input.replace(/=+$/, '');\r",
+									"output = output.replace(/\\+/g, '-');\r",
+									"output = output.replace(/\\//g, '_');\r",
+									"return output;\r",
+									"}\r",
+									"var replaceVars = function(string)\r",
+									"{\r",
+									"return string.replace(/\\{\\{.+?\\}\\}/g, function(match)\r",
+									"{\r",
+									"var varName = match.substr(2, match.length - 4);\r",
+									"var varValue = environment[varName] || globals[varName];\r",
+									"return varValue ? replaceVars(varValue) : match; // recursive!\r",
+									"});\r",
+									"};\r",
+									"// get 32 bytes random;\r",
+									"var random = crypto.lib.WordArray.random(16);\r",
+									"//get path expanding any variables that exist\r",
+									"var fullPath = replaceVars(request.url);\r",
+									"var loc = new sdk.Url(fullPath);\r",
+									"var path = loc.getPath();\r",
+									"//generate canonicalizedHeader\r",
+									"var ref = pm.request.headers.toObject(true);\r",
+									"var canonicalizedHeader = \"\";\r",
+									"for (var key in ref) {\r",
+									"//only headers with \"verint-\" prefix can be used\r",
+									"if (key.substring(0, 7).toLowerCase() != \"verint-\") continue;\r",
+									"canonicalizedHeader += (key + \":\");\r",
+									"var value = ref[key];\r",
+									"canonicalizedHeader += value;\r",
+									"canonicalizedHeader += \"\\n\";\r",
+									"}\r",
+									"//make canonicalizedHeader it lower case\r",
+									"canonicalizedHeader = canonicalizedHeader.toLowerCase();\r",
+									"//get String to sign\r",
+									"var salt = base64url(random);\r",
+									"var method = pm.request.method;\r",
+									"var issuedAt = ISODateString(new Date());\r",
+									"var stringToSign = salt + \"\\n\" + method + \"\\n\" + path + \"\\n\" + issuedAt +\r",
+									"\"\\n\" + canonicalizedHeader + \"\\n\";\r",
+									"var hash = crypto.HmacSHA256(stringToSign,\r",
+									"crypto.enc.Base64.parse(debase64url(APIKey)));\r",
+									"//get an signature\r",
+									"var signature = crypto.enc.Base64.stringify(hash);\r",
+									"//String prefix\r",
+									"var verintAuthId = \"Vrnt-1-HMAC-SHA256\";\r",
+									"//Generate Authorization Header Value\r",
+									"var authHeaderValue = verintAuthId + \" \" + \"salt=\" + salt + \",\" + \"iat=\" +\r",
+									"issuedAt + \",\" + \"kid=\" + APIKeyId + \",\" + \"sig=\" +\r",
+									"urlConvertBase64(signature);\r",
+									"console.log(APIKey)\r",
+									"console.log(APIKeyId)\r",
+									"console.log(method)\r",
+									"console.log(fullPath)\r",
+									"console.log(loc)\r",
+									"console.log(path)\r",
+									"\r",
+									"postman.setGlobalVariable(\"Authorization\", authHeaderValue);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{Authorization}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"data\": [\r\n        {\r\n            \"id\": \"0\",\r\n            \"type\": \"employee_schedule\",\r\n            \"attributes\": {\r\n                \"callbackURL\": \"http://localhost:8080/schedule-callback\",\r\n                \"requestPeriodStartDate\": \"2022-06-05T00:00:00Z\",\r\n                \"requestPeriodEndDate\": \"2022-06-12T00:00:00Z\",\r\n                \"scheduleInformationList\": [\r\n                    {\r\n                        \"employeeIdentifier\": \"Phone08\",\r\n                        \"employeeLookupKey\": \"userName\",\r\n                        \"shifts\": [\r\n                            {\r\n                                \"mainShiftEvent\": {\r\n                                    \"description\": \"\",\r\n                                    \"preShiftOvertime\": null,\r\n                                    \"postShiftOvertime\": null,\r\n                                    \"activityName\": \"PHONE\",\r\n                                    \"eventStartTime\": \"2022-06-07T11:00:00Z\",\r\n                                    \"duration\": \"480\"\r\n                                },\r\n                                \"shiftActivityList\": [\r\n                                    {\r\n                                        \"activityName\": \"Lunch\",\r\n                                        \"eventStartTime\": \"2022-06-07T18:15:00Z\",\r\n                                        \"duration\": \"30\"\r\n                                    },\r\n                                    {\r\n                                        \"activityName\": \"Break\",\r\n                                        \"eventStartTime\": \"2022-06-07T11:45:00Z\",\r\n                                        \"duration\": \"15\"\r\n                                    }\r\n                                ]\r\n                            }\r\n                        ]\r\n                    }\r\n                ],\r\n                \"calendarEventAssignmentList\": [],\r\n                \"calendarEventAssignmentActivityRemovalList\": []\r\n            }\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/wfo/fis-api/v1/schedules",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"wfo",
+								"fis-api",
+								"v1",
+								"schedules"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Catch and Test a Schedule Request Callback",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"data\" : {\r\n    \"id\" : \"0ec3e026-da3b-4001-9a1f-6e871ad935b1\",\r\n    \"type\" : \"schedule_request_tracking_data\",\r\n    \"attributes\" : {\r\n      \"queuedDate\" : \"2022-06-13T20:53:57Z\",\r\n      \"dequeuedDate\" : \"2022-06-13T20:53:57Z\",\r\n      \"employeeScheduleTrackingDataList\" : [ {\r\n        \"scheduleRequestId\" : 0,\r\n        \"processingState\" : \"SUCCESSFUL\",\r\n        \"errorMessage\" : \"\",\r\n        \"processingStartDate\" : \"2022-06-13T20:53:57Z\",\r\n        \"processingCompletedDate\" : \"2022-06-13T20:53:57Z\"\r\n      } ]\r\n    }\r\n  },\r\n  \"links\" : {\r\n    \"self\" : \"\"\r\n  }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/schedule-callback",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"schedule-callback"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
