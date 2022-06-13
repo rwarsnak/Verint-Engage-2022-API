@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class EmployeeRolesResponse {
+public class EmployeeRoleResponse {
     private String employeeId;
     private String roleName;
 }

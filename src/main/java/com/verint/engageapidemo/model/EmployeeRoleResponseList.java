@@ -11,5 +11,5 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class EmployeeRoleResponseList {
-    private List<EmployeeRolesResponse> responses = new ArrayList<>();
+    private List<EmployeeRoleResponse> responses = new ArrayList<>();
 }
